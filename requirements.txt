@@ -1,0 +1,6 @@
+streamlit
+bs4
+pathlib
+requests
+pandas
+mathplotlib

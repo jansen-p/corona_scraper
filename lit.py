@@ -19,7 +19,7 @@ def cleanDates(days):
             day = '0'+day
         if int(month) < 10:
             month = '0'+month
-        daysNew.append(day+"."+month)#+"."+year)
+        daysNew.append(day+"."+month+"."+year)
     return daysNew
 
 
@@ -38,12 +38,16 @@ st.subheader('Draw today\'s pie chart')
 country = 'Germany'
 df_country_selected = newestDay.loc[country].drop(['longitude','latitude'])
 
+
 st.write("Total cases: ",str(df_country_selected.Confirmed)[:-2])
-plt.pie(x=df_country_selected.drop(['Confirmed', 'Incident_Rate', 'Case_Fatality_Ratio']),colors=(list(['black','green','darkred'])),
-        labels=list(['Dead: '+str(df_country_selected[1])[:-2],
-                    'Recovered: '+str(df_country_selected[2])[:-2],
-                    'Infected: '+str(df_country_selected[3])[:-2]]))
-st.pyplot()
+fig, ax = plt.subplots()
+ax.pie(x=df_country_selected.drop(['Incident_Rate', 'Case_Fatality_Ratio', 'Recovered','Active']),colors=(list(['orange','black'])),#'darkred'])),
+        labels=list(['Confirmed: '+str(df_country_selected[0])[:-2],
+                     'Dead: '+str(df_country_selected[1])[:-2],
+                    ]))
+                    #'Infected: '+str(df_country_selected[3])[:-2]]))
+
+st.pyplot(fig)
 
 
 st.header('Display information about some countries')
@@ -59,9 +63,10 @@ else:
 
 ##
 
-confirmed = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv').groupby('Country/Region').sum()
-dead = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv').groupby('Country/Region').sum()
-recovered = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv').groupby('Country/Region').sum()
+src = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_'
+confirmed = pd.read_csv(src+'confirmed_global.csv').groupby('Country/Region').sum()
+dead = pd.read_csv(src+'deaths_global.csv').groupby('Country/Region').sum()
+recovered = pd.read_csv(src+'recovered_global.csv').groupby('Country/Region').sum()
 
 
 st.header('Timelines')
@@ -77,41 +82,38 @@ typ = st.radio(
     "Which plot?",
     ('Confirmed cases', 'Dead', 'Recovered'))
 
+startday = 25
+stepsize = int(len(confirmedClean.columns[startday:])/10)
+rotation = 45
+fig, ax = plt.subplots()
 if typ == 'Confirmed cases' and cs2:
     st.subheader('Confirmed cases:')
-    startday = 25
     for country in cs2:
-        plt.plot(confirmedClean.columns[startday:], confirmedClean.loc[country][startday:], label=country)
-    plt.legend()
-    plt.xticks(confirmedClean.columns[startday::7])
-    plt.grid('b')
-    st.pyplot()
+        ax.plot(confirmedClean.columns[startday:], confirmedClean.loc[country][startday:], label=country)
+    ax.set_xticks(confirmedClean.columns[startday::stepsize])
+    ax.set_xticklabels(list(confirmedClean.columns[startday::stepsize]),rotation=rotation)
 elif typ == 'Dead' and cs2:
     st.subheader('Total dead:')
-    startday = 25
     for country in cs2:
-        plt.plot(deadClean.columns[startday:], deadClean.loc[country][startday:], label=country)
-    plt.legend()
-    plt.xticks(deadClean.columns[startday::7])
-    plt.grid('b')
-    st.pyplot()
+        ax.plot(deadClean.columns[startday:], deadClean.loc[country][startday:], label=country)
+    ax.set_xticks(deadClean.columns[startday::stepsize])
+    ax.set_xticklabels(list(deadClean.columns[startday::stepsize]),rotation=rotation)
 elif typ == 'Recovered' and cs2:
     st.subheader('Total recovered:')
-    startday = 25
     for country in cs2:
-        plt.plot(recoveredClean.columns[startday:], recoveredClean.loc[country][startday:], label=country)
-    plt.legend()
-    plt.xticks(recoveredClean.columns[startday::7])
-    plt.grid('b')
-    st.pyplot()
+        ax.plot(recoveredClean.columns[startday:], recoveredClean.loc[country][startday:], label=country)
+    ax.set_xticks(recoveredClean.columns[startday::stepsize])
+    ax.set_xticklabels(list(recoveredClean.columns[startday::stepsize]),rotation=rotation)
 else:
     st.error("Enter a country above first!")
+ax.legend()
+ax.grid('b')
+st.pyplot(fig)
 
 
-
-add_selectbox = st.sidebar.selectbox(
-    'How would you like to be contacted?',
-    ('Email', 'Home phone', 'Mobile phone'))
+#add_selectbox = st.sidebar.selectbox(
+#    'How would you like to be contacted?',
+#    ('Email', 'Home phone', 'Mobile phone'))
 
 #st.header('It\'s a map!')
 #st.map(data[-1])
